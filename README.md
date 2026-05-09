@@ -15,6 +15,8 @@
 | **9. Backward Compatibility** | Supports iOS 13 and above                                                    | Supports much older iOS versions                                        |
 | **10. Industry Usage**        | Preferred for modern apps and new features                                   | Widely used in legacy and enterprise applications                       |
 
+---
+
 ## 2. SwiftUI App Life Cycle
 
 SwiftUI lifecycle defines:
@@ -493,5 +495,521 @@ onAppear()
 | viewWillAppear      | onAppear          |
 | viewDidDisappear    | onDisappear       |
 | UIApplication State | ScenePhase        |
+
+---
+
+## 3. Property Wrappers in SwiftUI
+
+Property wrappers are one of the MOST IMPORTANT topics in SwiftUI interviews.
+
+They help SwiftUI:
+
+* Manage state
+* Share data
+* Observe changes
+* Automatically refresh UI
+
+SwiftUI is completely state-driven, and property wrappers are the foundation of that system.
+
+---
+
+### What is a Property Wrapper?
+
+A property wrapper adds special behavior to a variable.
+
+In SwiftUI, property wrappers are mainly used for:
+
+* State management
+* Data flow
+* Dependency injection
+* Data persistence
+
+They start with `@`.
+
+Example:
+
+```swift id="dfzw9l"
+@State private var count = 0
+```
+
+Here:
+
+* `@State` is a property wrapper
+* It tells SwiftUI to observe this value
+
+---
+
+### Most Important SwiftUI Property Wrappers
+
+| Property Wrapper     | Purpose                          |
+| -------------------- | -------------------------------- |
+| `@State`             | Local state management           |
+| `@Binding`           | Two-way data binding             |
+| `@ObservedObject`    | Observe external object          |
+| `@StateObject`       | Create and own observable object |
+| `@EnvironmentObject` | Share data globally              |
+| `@Environment`       | Access system environment values |
+| `@Published`         | Notify object changes            |
+| `@AppStorage`        | Store data in UserDefaults       |
+| `@SceneStorage`      | Preserve scene state             |
+| `@FocusState`        | Manage keyboard focus            |
+
+---
+
+### @State
+
+#### Purpose
+
+Used for local mutable state inside a View.
+
+When value changes:
+
+* SwiftUI automatically refreshes UI.
+
+---
+
+#### Example
+
+```ruby
+struct CounterView: View {
+
+    @State private var count = 0
+
+    var body: some View {
+
+        VStack {
+
+            Text("Count: \(count)")
+
+            Button("Increment") {
+                count += 1
+            }
+        }
+    }
+}
+```
+
+---
+
+#### Important Points
+
+| Point               | Description                    |
+| ------------------- | ------------------------------ |
+| Local state         | Owned by same view             |
+| Value type          | Usually structs, strings, ints |
+| UI refresh          | Automatic                      |
+| Private recommended | Yes                            |
+---
+
+#### When to use @State?
+
+Use `@State` when:
+
+* Data belongs to the current view
+* Small local UI state is needed
+
+Example:
+
+* Toggle state
+* Counter
+* TextField input
+
+---
+
+### @Binding
+
+#### Purpose
+
+Creates two-way connection to data owned by another view.
+
+Child view can:
+
+* Read
+* Modify parent data
+
+---
+
+#### Example
+
+---
+
+#### Parent View
+
+```ruby
+struct ParentView: View {
+
+    @State private var isOn = false
+
+    var body: some View {
+        ChildView(isOn: $isOn)
+    }
+}
+```
+
+---
+
+#### Child View
+
+```ruby
+struct ChildView: View {
+
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle("Switch", isOn: $isOn)
+    }
+}
+```
+
+---
+
+#### Difference between @State and @Binding?
+
+| @State             | @Binding            |
+| ------------------ | ------------------- |
+| Owns data          | References data     |
+| Source of truth    | Connected to source |
+| Parent mostly uses | Child mostly uses   |
+
+---
+
+### @ObservedObject
+
+#### Purpose
+
+Observes external class object conforming to `ObservableObject`.
+
+UI refreshes when published properties change.
+
+---
+
+#### Example
+
+---
+
+#### ViewModel
+
+```ruby
+class UserViewModel: ObservableObject {
+
+    @Published var name = "Ayush"
+}
+```
+
+---
+
+#### View
+
+```swift id="y9v8kz"
+struct ContentView: View {
+
+    @ObservedObject var vm = UserViewModel()
+
+    var body: some View {
+        Text(vm.name)
+    }
+}
+```
+
+---
+
+#### Important Points
+
+| Point                  | Description |
+| ---------------------- | ----------- |
+| For reference types    | Classes     |
+| Needs ObservableObject | Yes         |
+| Uses @Published        | Usually     |
+| External ownership     | Yes         |
+
+---
+
+#### Problem with @ObservedObject
+
+If view reloads:
+
+* Object may recreate
+
+Solution:
+
+* Use `@StateObject`
+
+---
+
+### @StateObject
+
+#### Purpose
+
+Creates and owns ObservableObject.
+
+Object survives view redraws.
+
+---
+
+#### Example
+
+```ruby
+struct ContentView: View {
+
+    @StateObject private var vm = UserViewModel()
+
+    var body: some View {
+        Text(vm.name)
+    }
+}
+```
+
+---
+
+#### Difference between @ObservedObject and @StateObject
+
+| @ObservedObject     | @StateObject   |
+| ------------------- | -------------- |
+| Does not own object | Owns object    |
+| Recreated sometimes | Persistent     |
+| Injected object     | Created object |
+
+---
+
+#### Use:
+
+* `@StateObject` → when view CREATES ViewModel
+* `@ObservedObject` → when ViewModel comes from parent
+
+---
+
+### @EnvironmentObject
+
+#### Purpose
+
+Shares data globally across many views.
+
+Avoids manual dependency passing.
+
+---
+
+#### Example
+
+---
+
+#### Theme Manager
+
+```ruby
+class ThemeManager: ObservableObject {
+
+    @Published var darkMode = false
+}
+```
+
+---
+
+#### Inject
+
+```ruby
+@main
+struct DemoApp: App {
+
+    @StateObject var theme = ThemeManager()
+
+    var body: some Scene {
+
+        WindowGroup {
+            ContentView()
+                .environmentObject(theme)
+        }
+    }
+}
+```
+
+---
+
+#### Access
+
+```ruby
+@EnvironmentObject var theme: ThemeManager
+```
+
+---
+
+#### Common Use Cases
+
+* Theme management
+* User session
+* Authentication
+* App settings
+
+---
+
+### @Published
+
+#### Purpose
+
+Marks properties that notify observers when changed.
+
+Used inside ObservableObject.
+
+---
+
+#### Example
+
+```swift id="bnimhr"
+class CounterVM: ObservableObject {
+
+    @Published var count = 0
+}
+```
+
+Whenever `count` changes:
+
+* SwiftUI updates UI
+
+---
+
+#### Important Points
+
+| Point                     | Description |
+| ------------------------- | ----------- |
+| Used in class             | Yes         |
+| Requires ObservableObject | Yes         |
+| Triggers updates          | Yes         |
+
+---
+
+### @Environment
+
+#### Purpose
+
+Access system-provided values.
+
+---
+
+#### Example
+
+```ruby
+@Environment(\.colorScheme)
+var colorScheme
+```
+
+---
+
+#### Common Environment Values
+
+| Environment Value | Purpose                |
+| ----------------- | ---------------------- |
+| colorScheme       | Light/Dark mode        |
+| presentationMode  | Dismiss screen         |
+| locale            | Current language       |
+| dismiss           | Close sheet/navigation |
+
+---
+
+#### Example
+
+```ruby
+@Environment(\.dismiss)
+var dismiss
+```
+
+---
+
+### @AppStorage
+
+#### Purpose
+
+Store simple data in UserDefaults.
+
+---
+
+#### Example
+
+```ruby
+@AppStorage("isLoggedIn")
+var isLoggedIn = false
+```
+
+---
+
+#### Benefits
+
+| Benefit            | Description |
+| ------------------ | ----------- |
+| Persistent storage | Yes         |
+| Automatic sync     | Yes         |
+| Simple syntax      | Yes         |
+
+---
+
+#### Common Use Cases
+
+* Login flag
+* Theme preference
+* Settings
+
+---
+
+### @SceneStorage
+
+#### Purpose
+
+Preserves state for a scene/window.
+
+---
+
+#### Example
+
+```ruby
+@SceneStorage("username")
+var username = ""
+```
+
+---
+
+#### Difference
+
+| @AppStorage         | @SceneStorage         |
+| ------------------- | --------------------- |
+| Persistent app-wide | Scene-specific        |
+| UserDefaults        | Temporary scene state |
+
+---
+
+### @FocusState
+
+#### Purpose
+
+Manages keyboard focus.
+
+---
+
+#### Example
+
+```ruby
+@FocusState private var isFocused: Bool
+```
+
+---
+
+#### Example Usage
+
+```ruby
+TextField("Name", text: $name)
+    .focused($isFocused)
+```
+
+---
+
+#### Complete Data Flow Hierarchy
+
+```text
+@State
+   ↓
+@Binding
+   ↓
+@ObservedObject
+   ↓
+@StateObject
+   ↓
+@EnvironmentObject
+```
 
 ---
